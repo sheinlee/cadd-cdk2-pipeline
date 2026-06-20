@@ -1,0 +1,49 @@
+# ── Large MD / simulation artifacts (regenerable; kept off GitHub) ──
+*.dcd
+*.xtc
+*.trr
+*.nc
+*.ncrst
+*.rst7
+*.chk
+*.h5
+*.dat.gz
+# Trajectory/checkpoint dirs
+md/**/traj*
+md/**/*.dcd
+mmgbsa/**/_MMPBSA_*
+
+# ── Bulky intermediate structure/param files ──
+*.prmtop
+*.inpcrd
+*.parm7
+*.pdbqt
+ligands/raw/
+data/raw/
+data/decoys/
+
+# Keep small curated inputs explicitly (override above if needed):
+!config/*.pdbqt
+
+# ── Python / conda ──
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.env
+*.egg-info/
+build/
+dist/
+
+# ── OS / editor ──
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# ── Logs ──
+*.log
+logs/
+slurm-*.out
+*.out
+!results/**/*.out
