@@ -1,0 +1,88 @@
+{
+  "n_hits_md": 8,
+  "n_stable": 5,
+  "best_hit": "CHEMBL148580",
+  "best_dG_mmgbsa": -53.13,
+  "ranking": [
+    {
+      "cid": "CHEMBL148580",
+      "label": "active",
+      "vina": -10.29,
+      "dG_mmgbsa": -53.13,
+      "dG_std": 5.31,
+      "lig_rmsd_mean": 1.31,
+      "lig_rmsd_final": 1.09,
+      "stable": true
+    },
+    {
+      "cid": "C14253253",
+      "label": "decoy",
+      "vina": -10.43,
+      "dG_mmgbsa": -44.67,
+      "dG_std": 3.27,
+      "lig_rmsd_mean": 3.21,
+      "lig_rmsd_final": 3.99,
+      "stable": false
+    },
+    {
+      "cid": "CHEMBL210765",
+      "label": "active",
+      "vina": -10.24,
+      "dG_mmgbsa": -43.81,
+      "dG_std": 4.26,
+      "lig_rmsd_mean": 1.82,
+      "lig_rmsd_final": 1.52,
+      "stable": true
+    },
+    {
+      "cid": "C12376943",
+      "label": "decoy",
+      "vina": -10.65,
+      "dG_mmgbsa": -43.69,
+      "dG_std": 3.51,
+      "lig_rmsd_mean": 1.01,
+      "lig_rmsd_final": 1.24,
+      "stable": true
+    },
+    {
+      "cid": "C24583851",
+      "label": "decoy",
+      "vina": -10.24,
+      "dG_mmgbsa": -40.27,
+      "dG_std": 3.91,
+      "lig_rmsd_mean": 3.04,
+      "lig_rmsd_final": 3.08,
+      "stable": false
+    },
+    {
+      "cid": "CHEMBL183950",
+      "label": "active",
+      "vina": -10.85,
+      "dG_mmgbsa": -40.22,
+      "dG_std": 6.15,
+      "lig_rmsd_mean": 4.33,
+      "lig_rmsd_final": 5.14,
+      "stable": false
+    },
+    {
+      "cid": "C27794555",
+      "label": "decoy",
+      "vina": -10.28,
+      "dG_mmgbsa": -37.8,
+      "dG_std": 2.67,
+      "lig_rmsd_mean": 1.14,
+      "lig_rmsd_final": 1.12,
+      "stable": true
+    },
+    {
+      "cid": "CHEMBL1094820",
+      "label": "active",
+      "vina": -10.5,
+      "dG_mmgbsa": -37.39,
+      "dG_std": 3.83,
+      "lig_rmsd_mean": 1.49,
+      "lig_rmsd_final": 1.63,
+      "stable": true
+    }
+  ]
+}

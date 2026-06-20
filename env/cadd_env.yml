@@ -1,0 +1,25 @@
+name: cadd
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - rdkit
+  - vina
+  - meeko
+  - openbabel
+  - pdbfixer
+  - ambertools
+  - openmm
+  - openmmforcefields
+  - openff-toolkit
+  - parmed
+  - mdtraj
+  - mdanalysis
+  - numpy
+  - pandas
+  - scikit-learn
+  - matplotlib
+  - requests
+  # pin the CUDA stack to the GPU driver (RTX 4090, driver CUDA 12.6); a newer
+  # cuda-nvrtc makes OpenMM emit PTX the driver cannot load (UNSUPPORTED_PTX_VERSION).
+  - cuda-version=12.6

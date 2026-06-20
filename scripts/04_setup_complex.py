@@ -42,20 +42,22 @@ def smiles_for(manifest, cid):
 
 
 def rebuild_ligand(pose_pdbqt, smiles, out_mol2, work):
-    """Docked PDBQT pose -> correct-topology, H-added ligand mol2. Returns net formal charge."""
-    from rdkit import Chem
-    from rdkit.Chem import AllChem
+    """Docked PDBQT pose -> correct-topology, H-added ligand mol2. Returns net formal charge.
 
-    raw_sdf = work / "pose_raw.sdf"
-    run(["obabel", str(pose_pdbqt), "-O", str(raw_sdf)])
-    tmpl = Chem.MolFromSmiles(smiles)
-    pose = Chem.MolFromMolFile(str(raw_sdf), removeHs=True, sanitize=False)
-    pose = AllChem.AssignBondOrdersFromTemplate(tmpl, pose)
-    pose = Chem.AddHs(pose, addCoords=True)
-    net_charge = Chem.GetFormalCharge(pose)
+    Uses Meeko to reconstruct the RDKit molecule from the docked PDBQT (which carries the SMILES
+    in its REMARKs), giving correct bond orders + the docked coordinates directly -- this avoids
+    OpenBabel mis-perceiving bond orders from geometry (e.g. spurious pentavalent N)."""
+    from rdkit import Chem
+    from meeko import PDBQTMolecule, RDKitMolCreate
+
+    pmol = PDBQTMolecule.from_file(str(pose_pdbqt), skip_typing=True)
+    mol = RDKitMolCreate.from_pdbqt_mol(pmol)[0]
+    if mol is None:
+        raise RuntimeError("Meeko could not reconstruct the ligand from the docked pose")
+    net_charge = Chem.GetFormalCharge(mol)
     h_sdf = work / "pose_H.sdf"
-    Chem.MolToMolFile(pose, str(h_sdf))
-    run(["obabel", str(h_sdf), "-O", str(out_mol2)])
+    Chem.MolToMolFile(mol, str(h_sdf))
+    run(["obabel", str(h_sdf), "-O", str(out_mol2)])  # SDF->mol2 is a format conversion only
     return net_charge
 
 

@@ -30,11 +30,11 @@ echo "top hits: $HITS"
 
 for cid in $HITS; do
   echo "######## $cid ########"
-  (
-    set -e
-    python scripts/04_setup_complex.py --workdir "$WD" --cid "$cid"
-    python scripts/05_run_md.py        --workdir "$WD" --cid "$cid" --ns "$NS"
-    python scripts/06_mmgbsa.py        --workdir "$WD" --cid "$cid"
-  ) || echo "!!!! $cid FAILED — continuing with next hit"
+  # && chain so a failed step skips the rest of THIS hit; || keeps the loop going.
+  # (a `( set -e ... ) || ...` subshell would silently disable set -e in the || context.)
+  python scripts/04_setup_complex.py --workdir "$WD" --cid "$cid" \
+    && python scripts/05_run_md.py   --workdir "$WD" --cid "$cid" --ns "$NS" \
+    && python scripts/06_mmgbsa.py   --workdir "$WD" --cid "$cid" \
+    || echo "!!!! $cid FAILED — continuing with next hit"
 done
 echo "MD + MM-GBSA pipeline complete"

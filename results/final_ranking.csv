@@ -1,0 +1,9 @@
+cid,label,vina,dG_mmgbsa,dG_std,lig_rmsd_mean,lig_rmsd_final,stable
+CHEMBL148580,active,-10.29,-53.13,5.31,1.31,1.09,True
+C14253253,decoy,-10.43,-44.67,3.27,3.21,3.99,False
+CHEMBL210765,active,-10.24,-43.81,4.26,1.82,1.52,True
+C12376943,decoy,-10.65,-43.69,3.51,1.01,1.24,True
+C24583851,decoy,-10.24,-40.27,3.91,3.04,3.08,False
+CHEMBL183950,active,-10.85,-40.22,6.15,4.33,5.14,False
+C27794555,decoy,-10.28,-37.8,2.67,1.14,1.12,True
+CHEMBL1094820,active,-10.5,-37.39,3.83,1.49,1.63,True
