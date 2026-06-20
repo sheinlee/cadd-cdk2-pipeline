@@ -18,7 +18,9 @@ mmgbsa/**/_MMPBSA_*
 *.inpcrd
 *.parm7
 *.pdbqt
+*.ism
 ligands/raw/
+ligands/dude_*.ism
 data/raw/
 data/decoys/
 
