@@ -1,0 +1,14 @@
+{
+  "center_x": 1.713,
+  "center_y": 27.917,
+  "center_z": 8.056,
+  "size_x": 22.5,
+  "size_y": 22.5,
+  "size_z": 22.5,
+  "source": "2R3I ligand SCF/A",
+  "ligand_extent": [
+    6.24,
+    7.77,
+    8.37
+  ]
+}
