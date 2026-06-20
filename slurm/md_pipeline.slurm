@@ -23,7 +23,8 @@ cd "$WD"
 echo "host=$(hostname) gpu=$CUDA_VISIBLE_DEVICES TOPN=$TOPN NS=$NS WD=$WD"
 
 # top-N hits by Vina score (col6), status==ok (col7); most negative = best
-HITS=$(awk -F, 'NR>1 && $7=="ok" && $6!="" {print $6","$1}' docking/docking_scores.csv \
+HITS=$(tr -d '\r' < docking/docking_scores.csv \
+       | awk -F, 'NR>1 && $7=="ok" && $6!="" {print $6","$1}' \
        | sort -t, -k1,1g | head -n "$TOPN" | cut -d, -f2)
 echo "top hits: $HITS"
 

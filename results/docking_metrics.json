@@ -1,0 +1,17 @@
+{
+  "n_active": 60,
+  "n_decoy": 240,
+  "roc_auc": 0.613,
+  "EF1": 3.33,
+  "EF5": 2.33,
+  "EF10": 1.5,
+  "active_score_mean": -8.76,
+  "decoy_score_mean": -8.34,
+  "active_score_best": -10.85,
+  "redock_control": {
+    "control_id": "SCF",
+    "vina_score": -8.98,
+    "redock_rmsd": null,
+    "status": "fail:RuntimeError:No sub-structure match found between the reference and probe mol"
+  }
+}

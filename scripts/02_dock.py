@@ -88,8 +88,19 @@ def prepare_ligand_pdbqt(smiles, out_pdbqt, seed=0xC0FFEE):
 def best_rms_to_crystal(smiles, crystal_pdb, docked_pdbqt):
     from rdkit import Chem
     from rdkit.Chem import AllChem
+    # the crystal ligand may carry alternate conformations (altloc A/B); keep one
+    keep = []
+    for ln in Path(crystal_pdb).read_text().splitlines():
+        if ln.startswith(("ATOM", "HETATM")):
+            if ln[16] not in (" ", "A"):
+                continue
+            ln = ln[:16] + " " + ln[17:]
+        keep.append(ln)
+    with tempfile.NamedTemporaryFile("w", suffix=".pdb", delete=False) as tf:
+        tf.write("\n".join(keep) + "\n")
+        single = tf.name
     tmpl = Chem.MolFromSmiles(smiles)
-    cryst = Chem.MolFromPDBFile(str(crystal_pdb), sanitize=False, removeHs=True)
+    cryst = Chem.MolFromPDBFile(single, sanitize=False, removeHs=True)
     cryst = AllChem.AssignBondOrdersFromTemplate(tmpl, cryst)
     with tempfile.NamedTemporaryFile(suffix=".sdf", delete=False) as tf:
         sdf = tf.name
@@ -131,6 +142,8 @@ def main():
     ap.add_argument("--cpus", type=int, default=16)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--control-id", default="SCF")
+    ap.add_argument("--control-only", action="store_true",
+                    help="re-run only the redock positive control (skip the library screen)")
     args = ap.parse_args()
 
     wd = Path(args.workdir).resolve()
@@ -141,24 +154,27 @@ def main():
     poses_dir = wd / "docking" / "poses"
     poses_dir.mkdir(parents=True, exist_ok=True)
 
-    ligands = sorted((lig.stem, str(lig)) for lig in (wd / "ligands" / "pdbqt").glob("*.pdbqt"))
-    log(f"docking {len(ligands)} ligands, exhaustiveness={args.exhaustiveness}, cpus={args.cpus}")
+    scores = {}
+    if not args.control_only:
+        ligands = sorted((lig.stem, str(lig)) for lig in (wd / "ligands" / "pdbqt").glob("*.pdbqt"))
+        log(f"docking {len(ligands)} ligands, exhaustiveness={args.exhaustiveness}, cpus={args.cpus}")
+        chunks = chunkify(ligands, args.cpus)
+        payloads = [(c, receptor, center, size, args.seed, args.seed, str(poses_dir)) for c in chunks]
+        results = []
+        with Pool(len(payloads)) as pool:
+            for part in pool.map(dock_worker, payloads):
+                results.extend(part)
+        scores = {cid: (sc, st) for cid, sc, st in results}
+        log(f"docking complete: {sum(1 for _, st in scores.values() if st == 'ok')}/{len(ligands)} ok")
 
-    chunks = chunkify(ligands, args.cpus)
-    payloads = [(c, receptor, center, size, args.seed, args.seed, str(poses_dir)) for c in chunks]
-    results = []
-    with Pool(len(payloads)) as pool:
-        for part in pool.map(dock_worker, payloads):
-            results.extend(part)
-    scores = {cid: (sc, st) for cid, sc, st in results}
-    n_ok = sum(1 for sc, st in scores.values() if st == "ok")
-    log(f"docking complete: {n_ok}/{len(ligands)} ok")
-
-    # redocking positive control
+    # redocking positive control (always)
     log(f"redocking native control {args.control_id} ...")
     ctrl = redock_control(receptor, center, size, args.exhaustiveness, args.seed, wd, args.control_id)
     (wd / "docking" / "redock_control.json").write_text(json.dumps(ctrl, indent=2))
     log(f"control: {ctrl}")
+
+    if args.control_only:
+        return
 
     # merge with manifest, sort by score
     meta = load_manifest(wd / "ligands" / "ligands.csv")
@@ -170,7 +186,7 @@ def main():
     rows.sort(key=lambda r: (r[5] == "", r[5] if r[5] != "" else 0.0))
     out = wd / "docking" / "docking_scores.csv"
     with open(out, "w", newline="") as fh:
-        w = csv.writer(fh)
+        w = csv.writer(fh, lineterminator="\n")
         w.writerow(["chembl_id", "label", "pchembl", "mw", "clogp", "vina_score", "status"])
         w.writerows(rows)
     log(f"wrote {out}")

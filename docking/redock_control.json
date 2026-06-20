@@ -1,0 +1,6 @@
+{
+  "control_id": "SCF",
+  "smiles": "c1ccc(c(c1)c2cc(n3c(n2)ccn3)NCc4ccncc4)F",
+  "vina_score": -8.98,
+  "status": "fail:RuntimeError:No sub-structure match found between the reference and probe mol"
+}
