@@ -1,4 +1,4 @@
-# CDK2 Structure-Based Virtual Screening — Docking → MD → MM-GBSA
+# CDK2 Structure-Based Virtual Screening — Docking → MD → MM-GBSA → FEP
 
 > **Self-initiated practice project.** A complete, scriptable, reproducible computational
 > pipeline for structure-based virtual screening against **cyclin-dependent kinase 2 (CDK2)**.
@@ -17,6 +17,8 @@
   AmberTools) → ranking & per-residue analysis.
 - **Docking enrichment:** ROC-AUC **0.61**, EF₁% **3.3** — modest but real, and improved by the
   physics-based rescoring of the top hits.
+- **Relative binding FEP** (OpenFE, on the JACS/Wang-2015 CDK2 benchmark): 3 alchemical edges vs
+  experiment — MUE **0.71**, RMSE **1.1**, Pearson **r = 0.78**.
 
 The scientific question is deliberately modest and *checkable*: **how much does each added layer
 of physics (MD pose filtering, then MM-GBSA) change the ranking of the top docking hits, and how
@@ -61,6 +63,8 @@ ChEMBL ───────▶ 1. Ligand library (60 actives + 240 matched deco
                    │
                    ▼
           5. Final analysis: docking vs MM-GBSA ranking, pose stability, binding hotspots
+
+   (validation track) Relative binding FEP — OpenFE, JACS CDK2 benchmark ──▶ predicted vs exp ΔΔG
 ```
 
 ---
@@ -127,6 +131,30 @@ rescored with MM-GBSA. **5 of 8 poses stayed stable; 3 drifted** (ligand RMSD-to
 energies, this is a methods demonstration rather than a benchmark — but each layer behaves as
 theory predicts, and the combined docking → MD → MM-GBSA funnel ends on a real active.
 
+### Relative binding FEP vs experiment (OpenFE)
+
+As a higher-tier validation, relative binding free energies were computed with **OpenFE**
+(OpenMM hybrid-topology RBFE + Hamiltonian replica exchange + MBAR) on the standard
+**JACS / Wang-2015 CDK2 benchmark**, whose experimental IC₅₀s give reference ΔΔG. Three
+alchemical edges were run (1 repeat, 11 λ-windows, 5 ns/window per leg):
+
+| Edge (A→B) | FEP ΔΔG | Exp. ΔΔG |
+|------------|---------|----------|
+| lig_1h1q → lig_1oiy | −1.4 | −1.62 |
+| lig_21 → lig_22     |  0.0 | −0.03 |
+| lig_20 → lig_17     | −0.2 | +1.69 |
+
+**MUE = 0.71 · RMSE = 1.10 · Pearson r = 0.78 (n = 3).**
+
+![FEP vs experiment](results/fep_correlation.png)
+
+Two of three edges land within ~0.2 kcal/mol of experiment (including the near-zero
+sanity-check edge `lig_21→lig_22`); the third (`lig_20→lig_17`) is a clear miss — expected for a
+single-repeat, 5 ns RBFE run and an honest illustration that individual edges can fail to
+converge. This is a **3-edge methods demonstration, not a benchmark**: production FEP uses ≥3
+repeats over a full edge network for reliable error bars. The protocol itself is the
+community standard (see [References](#references-methods)).
+
 ---
 
 ## Reproduce
@@ -144,6 +172,17 @@ python scripts/03_analyze_docking.py  --workdir $WD
 # MD + MM-GBSA for the top hits (needs a GPU; run under SLURM)
 TOPN=8 NS=4 sbatch slurm/md_pipeline.slurm
 python scripts/07_final_analysis.py   --workdir $WD
+```
+
+Relative binding FEP (separate `fep` env; GPU via SLURM), on the JACS CDK2 benchmark:
+
+```bash
+conda env create -f env/fep_env.yml && conda activate fep
+# benchmark ligands.sdf + protein.pdb come from openff protein-ligand-benchmark (data/cdk2)
+openfe plan-rbfe-network -M ligands.sdf -p protein.pdb -o network_setup --n-protocol-repeats 1
+TRANSFORMS="rbfe_lig_21_solvent_lig_22_solvent rbfe_lig_21_complex_lig_22_complex" \
+    sbatch slurm/fep_run.slurm          # repeat per edge (1 solvent + 1 complex leg each)
+python scripts/08_fep_analysis.py --fepdir <fep_workdir>
 ```
 
 ---
@@ -172,19 +211,37 @@ A faithful record of the non-trivial issues hit while making this run end-to-end
 ## Limitations & next steps
 
 - Endpoint MM-GBSA is an approximate free-energy method; absolute values are not calibrated and
-  only **relative** rankings are meaningful. The natural next step is **relative binding FEP** on
-  a congeneric subset (CDK2 is a classic FEP benchmark) — scoped out here for compute-time reasons.
+  only **relative** rankings are meaningful (which is why the rigorous FEP track is included).
+- Relative binding FEP is run only as a **3-edge, single-repeat demonstration**; production work
+  uses ≥3 repeats over a full edge network for reliable error bars (and `lig_20→lig_17` shows a
+  single edge can miss).
 - Rigid-receptor docking; protein flexibility is only sampled in the post-docking MD.
-- No experimental validation — predictions are relative rankings, not measured affinities.
-- Modest library size (300) and a single MD replica per hit; production work would scale both.
+- The screening library (300) and FEP edge set (3) are deliberately small for a one-GPU demo;
+  scaling both is the obvious production step.
 
 ---
 
 ## Tools & environment
 
 RDKit · AutoDock Vina · Meeko · OpenBabel · PDBFixer · AmberTools (antechamber, tleap,
-MMPBSA.py, cpptraj) · OpenMM (CUDA) · MDAnalysis/MDTraj · scikit-learn · matplotlib.
-Hardware: NVIDIA RTX 4090.
+MMPBSA.py, cpptraj) · OpenMM (CUDA) · MDAnalysis/MDTraj · **OpenFE** (relative FEP) ·
+scikit-learn · matplotlib. Hardware: NVIDIA RTX 4090.
+
+## References / methods
+
+Every stage uses established, peer-reviewed methodology — nothing here is improvised:
+
+- **FEP theory:** Zwanzig, *J. Chem. Phys.* 1954; relative-binding thermodynamic cycle,
+  Jorgensen & Ravimohan, *J. Chem. Phys.* 1985.
+- **CDK2 FEP benchmark + protocol:** Wang et al., *J. Am. Chem. Soc.* 2015, 137, 2695; dataset
+  curation: OpenFF protein-ligand-benchmark (Hahn et al., *LiveCoMS* 2022). Experimental CDK2
+  IC₅₀s: Pevarello et al., *J. Med. Chem.* 2004 (doi:10.1021/jm0311442).
+- **Estimator / sampling:** MBAR, Shirts & Chodera, *J. Chem. Phys.* 2008; replica-exchange
+  multistate, Chodera & Shirts, *J. Chem. Phys.* 2011.
+- **Atom mapping:** LOMAP, Liu et al., *J. Comput. Aided Mol. Des.* 2013; Kartograf.
+- **Software:** OpenFE (`openfe`); OpenMM, Eastman et al., *PLoS Comput. Biol.* 2017; AmberTools
+  MM-GBSA (MMPBSA.py), Miller et al., *J. Chem. Theory Comput.* 2012; AutoDock Vina,
+  Trott & Olson 2010 / Eberhardt et al. 2021; GAFF2 + AM1-BCC, Wang et al. 2004 / Jakalian 2002.
 
 ## License
 

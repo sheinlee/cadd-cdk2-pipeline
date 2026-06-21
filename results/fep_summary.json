@@ -1,0 +1,26 @@
+{
+  "n_edges": 3,
+  "MUE": 0.71,
+  "RMSE": 1.1,
+  "pearson_r": 0.78,
+  "edges": [
+    {
+      "edge": "lig_1h1q->lig_1oiy",
+      "ddg_pred": -1.4,
+      "unc": 0.0,
+      "ddg_exp": -1.62
+    },
+    {
+      "edge": "lig_20->lig_17",
+      "ddg_pred": -0.2,
+      "unc": 0.0,
+      "ddg_exp": 1.69
+    },
+    {
+      "edge": "lig_21->lig_22",
+      "ddg_pred": 0.0,
+      "unc": 0.0,
+      "ddg_exp": -0.03
+    }
+  ]
+}
